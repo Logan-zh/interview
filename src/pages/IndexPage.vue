@@ -29,8 +29,8 @@
               <div>{{ col.value }}</div>
             </q-td>
             <q-td class="text-right" auto-width v-if="tableButtons.length > 0">
-              <q-btn @click="handleClickOption(btn, props.row)" v-for="(   btn, index   ) in    tableButtons   "
-                :key="index" size="sm" color="grey-6" round dense :icon="btn.icon" class="q-ml-md" padding="5px 5px">
+              <q-btn @click="handleClickOption(btn, props.row)" v-for="(btn, index) in tableButtons" :key="index"
+                size="sm" color="grey-6" round dense :icon="btn.icon" class="q-ml-md" padding="5px 5px">
                 <q-tooltip transition-show="scale" transition-hide="scale" anchor="top middle" self="bottom middle"
                   :offset="[10, 10]">
                   {{ btn.label }}
@@ -54,12 +54,15 @@
 import axios from 'axios';
 import { QTableProps } from 'quasar';
 import { ref, onBeforeMount } from 'vue';
+import { useQuasar } from 'quasar'
+
+const $q = useQuasar()
+
 interface btnType {
   label: string;
   icon: string;
   status: string;
 }
-const prompt = ref();
 const blockData = ref([
   {
     name: 'test',
@@ -101,7 +104,28 @@ function handleClickOption(btn, data) {
   if (btn.status === 'edit') {
     axios.patch('https://dahua.metcfire.com.tw/api/CRUDTest', { ...tempData.value, id: data.id }).then(res => handleResponse(res))
   } else if (btn.status === 'delete') {
-    axios.delete(`https://dahua.metcfire.com.tw/api/CRUDTest/${data.id}`, { ...tempData.value, id: data.id }).then(res => handleResponse(res))
+    $q.dialog({
+      title: '提示',
+      message: '是否確定刪除該筆資料?',
+      cancel: true,
+      persistent: true,
+      ok: {
+        label: '確定',
+        tabindex: 1
+      },
+      cancel: {
+        label: '取消',
+        tabindex: 0
+      },
+    }).onOk(() => {
+      axios.delete(`https://dahua.metcfire.com.tw/api/CRUDTest/${data.id}`, { ...tempData.value, id: data.id }).then(res => handleResponse(res))
+    }).onOk(() => {
+      // console.log('>>>> second OK catcher')
+    }).onCancel(() => {
+      // console.log('>>>> Cancel')
+    }).onDismiss(() => {
+      // console.log('I am triggered on both OK and Cancel')
+    })
   } else if (btn.status === 'add') {
     axios.post('https://dahua.metcfire.com.tw/api/CRUDTest', { ...data }).then(res => handleResponse(res))
   }
