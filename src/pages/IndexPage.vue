@@ -2,16 +2,21 @@
   <q-page class="row q-pt-xl">
     <div class="full-width q-px-xl">
       <div class="q-mb-xl">
-        <q-input v-model="tempData.name" label="姓名" />
-        <q-input v-model="tempData.age" label="年齡" />
-        <q-btn color="primary" class="q-mt-md" @click="add">新增</q-btn>
+        <q-input v-model="tempData.name" label="姓名" :rules="[val => !!val || '不得空白']" />
+        <q-input v-model="tempData.age" label="年齡"
+          :rules="[val => !!val || '不得空白', val => /\d+/.test(val) || '限輸入數字(正整數)']" />
+        <q-btn color="primary" class="q-mt-md" @click="handleClickOption({
+          label: '新增',
+          icon: 'add',
+          status: 'add',
+        }, tempData)">新增</q-btn>
       </div>
 
       <q-table flat bordered ref="tableRef" :rows="blockData" :columns="(tableConfig as QTableProps['columns'])"
         row-key="id" hide-pagination separator="cell" :rows-per-page-options="[0]">
         <template v-slot:header="props">
           <q-tr :props="props">
-            <q-th v-for="col in props.cols" :key="col.name" :props="props">
+            <q-th v-for="   col    in    props.cols   " :key="col.name" :props="props">
               {{ col.label }}
             </q-th>
             <q-th></q-th>
@@ -20,12 +25,12 @@
 
         <template v-slot:body="props">
           <q-tr :props="props">
-            <q-td v-for="col in props.cols" :key="col.name" :props="props" style="min-width: 120px">
+            <q-td v-for="   col    in    props.cols   " :key="col.name" :props="props" style="min-width: 120px">
               <div>{{ col.value }}</div>
             </q-td>
             <q-td class="text-right" auto-width v-if="tableButtons.length > 0">
-              <q-btn @click="handleClickOption(btn, props.row)" v-for="(btn, index) in tableButtons" :key="index"
-                size="sm" color="grey-6" round dense :icon="btn.icon" class="q-ml-md" padding="5px 5px">
+              <q-btn @click="handleClickOption(btn, props.row)" v-for="(   btn, index   ) in    tableButtons   "
+                :key="index" size="sm" color="grey-6" round dense :icon="btn.icon" class="q-ml-md" padding="5px 5px">
                 <q-tooltip transition-show="scale" transition-hide="scale" anchor="top middle" self="bottom middle"
                   :offset="[10, 10]">
                   {{ btn.label }}
@@ -42,23 +47,6 @@
         </template>
       </q-table>
     </div>
-
-    <q-dialog v-model="prompt" persistent>
-      <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="text-h6">Your address</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-input dense v-model="address" autofocus @keyup.enter="prompt = false" />
-        </q-card-section>
-
-        <q-card-actions align="right" class="text-primary">
-          <q-btn flat label="Cancel" v-close-popup />
-          <q-btn flat label="Add address" v-close-popup />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
 
@@ -110,15 +98,13 @@ const tempData = ref({
   age: '',
 });
 function handleClickOption(btn, data) {
-  if (btn.status == 'edit') {
+  if (btn.status === 'edit') {
     axios.patch('https://dahua.metcfire.com.tw/api/CRUDTest', { ...tempData.value, id: data.id }).then(res => handleResponse(res))
-  } else if (btn.status == 'delete') {
+  } else if (btn.status === 'delete') {
     axios.delete(`https://dahua.metcfire.com.tw/api/CRUDTest/${data.id}`, { ...tempData.value, id: data.id }).then(res => handleResponse(res))
+  } else if (btn.status === 'add') {
+    axios.post('https://dahua.metcfire.com.tw/api/CRUDTest', { ...data }).then(res => handleResponse(res))
   }
-}
-
-function add() {
-  axios.post('https://dahua.metcfire.com.tw/api/CRUDTest', { ...tempData.value }).then(res => handleResponse(res))
 }
 
 function getBlockData() {
